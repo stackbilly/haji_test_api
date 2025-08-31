@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -30,6 +31,9 @@ public class User {
     @JsonProperty("email")
     private String email;
 
+    @JsonProperty("password")
+    private String password;
+
     @JsonProperty("mobile")
     private String mobile;
 
@@ -37,7 +41,7 @@ public class User {
     private String address;
 
     @JsonProperty("createdAt")
-    private String createdAt;
+    private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
     @JsonProperty("userRole")
@@ -55,7 +59,7 @@ public class User {
     // @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssx", shape =
     // JsonFormat.Shape.STRING, timezone = "UTC")
     @JsonProperty("updatedAt")
-    private String updatedAt;
+    private LocalDateTime updatedAt;
 
     @JsonProperty("fcmToken")
     private String fcmToken;
@@ -64,13 +68,14 @@ public class User {
     }
 
     // Parameterized constructor
-    public User(String firstName, String lastName, String email, String mobile,
-            String address, String createdAt, UserRole userRole,
+    public User(String firstName, String lastName, String email, String password, String mobile,
+            String address, LocalDateTime createdAt, UserRole userRole,
             boolean emailNotification, boolean pushNotification,
-            boolean smsNotification, String updatedAt, String fcmToken) {
+            boolean smsNotification, LocalDateTime updatedAt, String fcmToken) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.password = password;
         this.mobile = mobile;
         this.address = address;
         this.createdAt = createdAt;
@@ -115,6 +120,14 @@ public class User {
         this.email = email;
     }
 
+    public String getPassword() {
+        return this.password;
+    }
+
+    public void setPassword(String pwd) {
+        this.password = pwd;
+    }
+
     public String getMobile() {
         return mobile;
     }
@@ -131,11 +144,11 @@ public class User {
         this.address = address;
     }
 
-    public String getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -171,11 +184,11 @@ public class User {
         this.smsNotification = smsNotification;
     }
 
-    public String getUpdatedAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(String updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 

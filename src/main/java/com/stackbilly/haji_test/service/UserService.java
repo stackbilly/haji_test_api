@@ -2,7 +2,9 @@ package com.stackbilly.haji_test.service;
 
 import com.stackbilly.haji_test.models.User;
 import com.stackbilly.haji_test.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,8 +14,14 @@ import java.util.UUID;
 @Service
 public class UserService {
 
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
     private UserRepository repository;
+
+    public UserService(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public List<User> getAllUsers() {
         return repository.findAll();
@@ -24,6 +32,8 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        String hashedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(hashedPassword);
         return repository.save(user);
     }
 
