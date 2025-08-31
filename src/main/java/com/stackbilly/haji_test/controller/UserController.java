@@ -4,67 +4,54 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.stackbilly.haji_test.exceptions.UserNotFoundException;
 import com.stackbilly.haji_test.models.User;
-import com.stackbilly.haji_test.repository.UserRepository;
+import com.stackbilly.haji_test.service.UserService;
 
 @RestController
+@RequestMapping("/api")
 public class UserController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
-    public UserController(UserRepository uRepository) {
-        this.userRepository = uRepository;
+    public UserController(UserService uService) {
+        this.userService = uService;
     }
 
-    @GetMapping("/api/users")
+    @GetMapping("/users")
     List<User> allUsers() {
-        return userRepository.findAll();
+        return userService.getAllUsers();
     }
 
-    @GetMapping("api/users/{id}")
-    User getUser(@PathVariable UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+    @GetMapping("/users/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable UUID id) {
+        return userService.getUserById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/api/users")
-    User newUser(@RequestBody User nUser) {
-        return userRepository.save(nUser);
+    @PostMapping("/users")
+    public User createUser(@RequestBody User nUser) {
+        return userService.createUser(nUser);
     }
 
-    @PutMapping("/api/users/{id}")
-    User updateUser(@RequestBody User nUser, @PathVariable UUID id) {
-        return userRepository.findById(id)
-                .map(user -> {
-                    user.setFirstName(nUser.getFirstName());
-                    user.setLastName(nUser.getLastName());
-                    user.setAddress(nUser.getAddress());
-                    user.setEmail(nUser.getEmail());
-                    user.setMobile(nUser.getMobile());
-                    user.setUserRole(nUser.getUserRole());
-                    user.setEmailNotification(nUser.isEmailNotification());
-                    user.setPushNotification(nUser.isPushNotification());
-                    user.setSmsNotification(nUser.isSmsNotification());
-                    user.setUpdatedAt(nUser.getUpdatedAt());
-                    user.setFcmToken(nUser.getFcmToken());
-                    return userRepository.save(user);
-                }).orElseGet(() -> {
-                    return userRepository.save(nUser);
-                });
+    @PutMapping("/users/{id}")
+    public User updateUser(@RequestBody User user, @PathVariable UUID id) {
+        return userService.updateUser(user);
     }
 
-    @DeleteMapping("/api/user/{id}")
+    @DeleteMapping("/user/{id}")
     void deleteUser(@PathVariable UUID id) {
-        userRepository.deleteById(id);
+        userService.deleteUser(id);
     }
 }
