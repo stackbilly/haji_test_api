@@ -1,6 +1,7 @@
 package com.stackbilly.haji_test.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +32,7 @@ public class UserController {
     }
 
     @GetMapping("api/users/{id}")
-    User getUser(@PathVariable Long id) {
+    User getUser(@PathVariable UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
     }
@@ -42,7 +43,7 @@ public class UserController {
     }
 
     @PutMapping("/api/users/{id}")
-    User updateUser(@RequestBody User nUser, @PathVariable Long id) {
+    User updateUser(@RequestBody User nUser, @PathVariable UUID id) {
         return userRepository.findById(id)
                 .map(user -> {
                     user.setFirstName(nUser.getFirstName());
@@ -63,7 +64,7 @@ public class UserController {
     }
 
     @DeleteMapping("/api/user/{id}")
-    void deleteUser(@PathVariable Long id) {
+    void deleteUser(@PathVariable UUID id) {
         userRepository.deleteById(id);
     }
 }

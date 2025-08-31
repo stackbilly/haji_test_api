@@ -1,6 +1,15 @@
 package com.stackbilly.haji_test.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
@@ -8,8 +17,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long uid;
+    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "UUID")
+    @UuidGenerator
+    private UUID uid;
 
     @JsonProperty("firstName")
     private String firstName;
@@ -73,11 +83,11 @@ public class User {
     }
 
     // --- Getters/Setters ---
-    public Long getUid() {
+    public UUID getUid() {
         return uid;
     }
 
-    public void setUid(Long uid) {
+    public void setUid(UUID uid) {
         this.uid = uid;
     }
 
