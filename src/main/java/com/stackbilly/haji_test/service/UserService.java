@@ -1,12 +1,14 @@
 package com.stackbilly.haji_test.service;
 
 import com.stackbilly.haji_test.models.User;
+import com.stackbilly.haji_test.models.UserRole;
 import com.stackbilly.haji_test.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +36,13 @@ public class UserService {
     public User createUser(User user) {
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(hashedPassword);
+
+        if (user.getUserRole() == null) {
+            user.setUserRole(UserRole.USER);
+        }
+
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
         return repository.save(user);
     }
 
