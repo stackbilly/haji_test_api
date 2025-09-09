@@ -1,0 +1,852 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hajiv1/orders/new_order.dart';
+
+// Import the OrdersPage
+class OrdersPage extends StatefulWidget {
+  const OrdersPage({super.key});
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _OrdersPageState createState() => _OrdersPageState();
+}
+
+class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
+  late TabController _tabController;
+  
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        title: Text(
+          'My Orders',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search, color: Colors.grey[700]),
+            onPressed: () => _showSearchDialog(),
+          ),
+          IconButton(
+            icon: Icon(Icons.filter_list, color: Colors.grey[700]),
+            onPressed: () => _showFilterDialog(),
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Colors.blue,
+          unselectedLabelColor: Colors.grey[600],
+          indicatorColor: Colors.blue,
+          indicatorWeight: 2,
+          tabs: [
+            Tab(text: 'Active'),
+            Tab(text: 'Completed'),
+            Tab(text: 'Cancelled'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildActiveOrdersTab(),
+          _buildCompletedOrdersTab(),
+          _buildCancelledOrdersTab(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).push(MaterialPageRoute(builder: (context)=>NewOrderPage())); // Go back to home to place new order
+        },
+        icon: Icon(Icons.add),
+        label: Text('New Order'),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  Widget _buildActiveOrdersTab() {
+    List<Map<String, dynamic>> activeOrders = [
+      {
+        'id': 'ORD001',
+        'items': [
+          {'name': '20L Water Bottle', 'quantity': 2, 'type': 'water'},
+          {'name': '13kg Gas Cylinder', 'quantity': 1, 'type': 'gas'},
+        ],
+        'total': 2500.0,
+        'status': 'Out for Delivery',
+        'statusColor': Colors.orange,
+        'orderDate': '2024-01-15 09:30 AM',
+        'estimatedDelivery': '2024-01-15 11:00 AM',
+        'deliveryAddress': 'Westlands, Nairobi',
+        'driverName': 'John Mwangi',
+        'driverPhone': '+254 712 345 678',
+        'progress': 0.75,
+      },
+      {
+        'id': 'ORD002',
+        'items': [
+          {'name': '6kg Gas Cylinder', 'quantity': 2, 'type': 'gas'},
+        ],
+        'total': 1800.0,
+        'status': 'Processing',
+        'statusColor': Colors.blue,
+        'orderDate': '2024-01-15 08:45 AM',
+        'estimatedDelivery': '2024-01-15 10:30 AM',
+        'deliveryAddress': 'Karen, Nairobi',
+        'driverName': null,
+        'driverPhone': null,
+        'progress': 0.25,
+      },
+    ];
+
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: activeOrders.length,
+      itemBuilder: (context, index) {
+        return _buildActiveOrderCard(activeOrders[index]);
+      },
+    );
+  }
+
+  Widget _buildCompletedOrdersTab() {
+    List<Map<String, dynamic>> completedOrders = [
+      {
+        'id': 'ORD005',
+        'items': [
+          {'name': '20L Water Bottle', 'quantity': 3, 'type': 'water'},
+        ],
+        'total': 1500.0,
+        'deliveredDate': '2024-01-14 02:30 PM',
+        'deliveryAddress': 'Westlands, Nairobi',
+        'rating': 5,
+      },
+      {
+        'id': 'ORD004',
+        'items': [
+          {'name': '13kg Gas Cylinder', 'quantity': 1, 'type': 'gas'},
+          {'name': '20L Water Bottle', 'quantity': 1, 'type': 'water'},
+        ],
+        'total': 2000.0,
+        'deliveredDate': '2024-01-13 11:15 AM',
+        'deliveryAddress': 'Karen, Nairobi',
+        'rating': 4,
+      },
+      {
+        'id': 'ORD003',
+        'items': [
+          {'name': '3kg Gas Cylinder', 'quantity': 4, 'type': 'gas'},
+        ],
+        'total': 2400.0,
+        'deliveredDate': '2024-01-12 04:45 PM',
+        'deliveryAddress': 'Kilimani, Nairobi',
+        'rating': null,
+      },
+    ];
+
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: completedOrders.length,
+      itemBuilder: (context, index) {
+        return _buildCompletedOrderCard(completedOrders[index]);
+      },
+    );
+  }
+
+  Widget _buildCancelledOrdersTab() {
+    List<Map<String, dynamic>> cancelledOrders = [
+      {
+        'id': 'ORD006',
+        'items': [
+          {'name': '20L Water Bottle', 'quantity': 2, 'type': 'water'},
+        ],
+        'total': 1000.0,
+        'cancelledDate': '2024-01-10 03:20 PM',
+        'cancelReason': 'Customer requested cancellation',
+        'refundStatus': 'Refunded',
+      },
+    ];
+
+    if (cancelledOrders.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cancel_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            SizedBox(height: 16),
+            Text(
+              'No cancelled orders',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'All your orders have been successful!',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: cancelledOrders.length,
+      itemBuilder: (context, index) {
+        return _buildCancelledOrderCard(cancelledOrders[index]);
+      },
+    );
+  }
+
+  Widget _buildActiveOrderCard(Map<String, dynamic> order) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order #${order['id']}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: order['statusColor'].withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    order['status'],
+                    style: TextStyle(
+                      color: order['statusColor'],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            
+            // Progress Bar
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Delivery Progress',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: order['progress'],
+                  backgroundColor: Colors.grey[200],
+                  valueColor: AlwaysStoppedAnimation<Color>(order['statusColor']),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  '${(order['progress'] * 100).round()}% Complete',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 16),
+            
+            // Items
+            ...order['items'].map<Widget>((item) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: item['type'] == 'water' ? Colors.blue.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        item['type'] == 'water' ? Icons.water_drop : Icons.propane_tank,
+                        color: item['type'] == 'water' ? Colors.blue : Colors.orange,
+                        size: 20,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '${item['quantity']}x ${item['name']}',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            
+            SizedBox(height: 16),
+            Divider(),
+            SizedBox(height: 12),
+            
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    order['deliveryAddress'],
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            
+            Row(
+              children: [
+                Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
+                SizedBox(width: 8),
+                Text(
+                  'Est. delivery: ${order['estimatedDelivery']}',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            
+            if (order['driverName'] != null) ...[
+              SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.blue,
+                      child: Text(
+                        order['driverName'][0],
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order['driverName'],
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          Text(
+                            'Your delivery driver',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.phone, color: Colors.blue),
+                      onPressed: () => _callDriver(order['driverPhone']),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            
+            SizedBox(height: 16),
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total: KSh ${order['total'].toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Row(
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => _trackOrder(order['id']),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue,
+                        side: BorderSide(color: Colors.blue),
+                      ),
+                      child: Text('Track'),
+                    ),
+                    SizedBox(width: 5),
+                    ElevatedButton(
+                      onPressed: () => _showOrderDetails(order),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                      ),
+                      child: Text('Details'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedOrderCard(Map<String, dynamic> order) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order #${order['id']}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Delivered',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            
+            // Items
+            ...order['items'].map<Widget>((item) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: item['type'] == 'water' ? Colors.blue.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        item['type'] == 'water' ? Icons.water_drop : Icons.propane_tank,
+                        color: item['type'] == 'water' ? Colors.blue : Colors.orange,
+                        size: 16,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '${item['quantity']}x ${item['name']}',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            
+            SizedBox(height: 12),
+            Divider(),
+            SizedBox(height: 8),
+            
+            Row(
+              children: [
+                Icon(Icons.check_circle, size: 16, color: Colors.green),
+                SizedBox(width: 8),
+                Text(
+                  'Delivered on ${order['deliveredDate']}',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 12),
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total: KSh ${order['total'].toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Row(
+                  children: [
+                    if (order['rating'] == null)
+                      OutlinedButton(
+                        onPressed: () => _rateOrder(order['id']),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.orange,
+                          side: BorderSide(color: Colors.orange),
+                        ),
+                        child: Text('Rate'),
+                      )
+                    else
+                      Row(
+                        children: List.generate(5, (index) {
+                          return Icon(
+                            index < order['rating'] ? Icons.star : Icons.star_border,
+                            color: Colors.orange,
+                            size: 14,
+                          );
+                        }),
+                      ),
+                    SizedBox(width: 5),
+                    ElevatedButton(
+                      onPressed: () => _reorderItems(order),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+                      child: Text('Reorder'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCancelledOrderCard(Map<String, dynamic> order) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order #${order['id']}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Cancelled',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            
+            // Items
+            ...order['items'].map<Widget>((item) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        item['type'] == 'water' ? Icons.water_drop : Icons.propane_tank,
+                        color: Colors.grey,
+                        size: 16,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '${item['quantity']}x ${item['name']}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            
+            SizedBox(height: 12),
+            Divider(),
+            SizedBox(height: 8),
+            
+            Text(
+              'Cancelled on ${order['cancelledDate']}',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Reason: ${order['cancelReason']}',
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            ),
+            
+            SizedBox(height: 12),
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total: KSh ${order['total'].toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        decoration: TextDecoration.lineThrough,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      order['refundStatus'],
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: () => _reorderItems(order),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                  ),
+                  child: Text('Reorder'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSearchDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Search Orders'),
+          content: TextField(
+            decoration: InputDecoration(
+              hintText: 'Enter order ID or item name...',
+              prefixIcon: Icon(Icons.search),
+            ),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Implement search functionality
+              },
+              child: Text('Search'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Filter Orders'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CheckboxListTile(
+                title: Text('Water Bottles'),
+                value: true,
+                onChanged: (value) {},
+              ),
+              CheckboxListTile(
+                title: Text('Gas Cylinders'),
+                value: true,
+                onChanged: (value) {},
+              ),
+              CheckboxListTile(
+                title: Text('Last 7 days'),
+                value: false,
+                onChanged: (value) {},
+              ),
+              CheckboxListTile(
+                title: Text('Last 30 days'),
+                value: true,
+                onChanged: (value) {},
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Apply filters
+              },
+              child: Text('Apply'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _trackOrder(String orderId) {
+    // Navigate to order tracking page
+    print('Tracking order: $orderId');
+  }
+
+  void _showOrderDetails(Map<String, dynamic> order) {
+    // Navigate to order details page
+    print('Show details for order: ${order['id']}');
+  }
+
+  void _callDriver(String? phoneNumber) {
+    if (phoneNumber != null) {
+      print('Calling driver: $phoneNumber');
+      // Implement phone call functionality
+    }
+  }
+
+  void _rateOrder(String orderId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Rate Your Order'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('How was your delivery experience?'),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(Icons.star_border, color: Colors.orange),
+                    onPressed: () {
+                      // Handle rating
+                    },
+                  );
+                }),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Submit rating
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _reorderItems(Map<String, dynamic> order) {
+    // Navigate to cart with same items
+    print('Reordering items from: ${order['id']}');
+  }
+}

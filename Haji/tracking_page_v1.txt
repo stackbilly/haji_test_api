@@ -1,0 +1,464 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+// import 'package:hajiv1/model/driver_model.dart';
+import 'package:hajiv1/model/order_model_v1.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+class OrderTrackingPage extends StatefulWidget {
+  final OrderModelV1 order;
+
+  const OrderTrackingPage({super.key, required this.order});
+
+  @override
+  State<OrderTrackingPage> createState() => _OrderTrackingPageState();
+}
+
+class _OrderTrackingPageState extends State<OrderTrackingPage> {
+  late GoogleMapController _mapController;
+  final Set<Marker> _markers = {};
+  LatLng? _driverLocation;
+  LatLng? _userLocation;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeMap();
+  }
+
+  void _initializeMap() async {
+    // Simulate fetching driver location (replace with real API call)
+    await Future.delayed(const Duration(seconds: 1));
+
+    setState(() {
+      _driverLocation = const LatLng(-1.2921, 36.8219); // Nairobi coordinates
+      _userLocation = const LatLng(-1.3000, 36.8000); // User location
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('driver'),
+          position: _driverLocation!,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          infoWindow: const InfoWindow(title: 'Your Driver'),
+        ),
+      );
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('user'),
+          position: _userLocation!,
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueGreen,
+          ),
+          infoWindow: const InfoWindow(title: 'Your Location'),
+        ),
+      );
+      _isLoading = false;
+    });
+
+    // Center the map between driver and user locations
+    _mapController.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          northeast: LatLng(
+            _driverLocation!.latitude > _userLocation!.latitude
+                ? _driverLocation!.latitude
+                : _userLocation!.latitude,
+            _driverLocation!.longitude > _userLocation!.longitude
+                ? _driverLocation!.longitude
+                : _userLocation!.longitude,
+          ),
+          southwest: LatLng(
+            _driverLocation!.latitude < _userLocation!.latitude
+                ? _driverLocation!.latitude
+                : _userLocation!.latitude,
+            _driverLocation!.longitude < _userLocation!.longitude
+                ? _driverLocation!.longitude
+                : _userLocation!.longitude,
+          ),
+        ),
+        100, // padding
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Track Your Order'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            children: [
+              SizedBox(
+                height: constraints.maxHeight * 0.6,
+                child: _buildMapSection(),
+              ),
+              Expanded(flex: 1, child: _buildTrackingDetails()),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMapSection() {
+    return Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: const CameraPosition(
+            target: LatLng(-1.2921, 36.8219), // Default to Nairobi
+            zoom: 14,
+          ),
+          markers: _markers,
+          onMapCreated: (controller) {
+            _mapController = controller;
+          },
+          myLocationEnabled: true,
+          myLocationButtonEnabled: false,
+          zoomControlsEnabled: false,
+        ),
+        if (_isLoading) const Center(child: CircularProgressIndicator()),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton(
+            mini: true,
+            onPressed: () {
+              if (_driverLocation != null) {
+                _mapController.animateCamera(
+                  CameraUpdate.newLatLng(_driverLocation!),
+                );
+              }
+            },
+            child: const Icon(Icons.gps_fixed),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrackingDetails() {
+    List<Map<String, dynamic>> driver = [];
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        // Add this to make the content scrollable
+        child: StreamBuilder(
+          stream: FirebaseFirestore.instance
+              .collection("drivers")
+              .where('uid', isEqualTo: widget.order.driverUID)
+              .snapshots(),
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation(Colors.blue),
+                    ),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Something went wrong',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Please try again later',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("No available data.!"));
+                }
+                driver = snapshot.data!.docs
+                    .map((doc) => doc.data() as Map<String, dynamic>)
+                    .toList();
+                return Column(
+                  mainAxisSize:
+                      MainAxisSize.min, // Important to prevent overflow
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildOrderProgress(),
+                    const SizedBox(height: 16),
+                    _buildDriverInfo(driver[0]),
+                    const SizedBox(height: 16),
+                    _buildActionButtons(),
+                  ],
+                );
+              },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderProgress() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Order ${widget.order.orderId}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: widget.order.deliveryProgress / 100,
+          backgroundColor: Colors.grey[200],
+          valueColor: AlwaysStoppedAnimation<Color>(
+            _getStatusColor(widget.order.orderStage),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${widget.order.deliveryProgress}% Complete',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+            Text(
+              _getStatusText(widget.order.orderStage),
+              style: TextStyle(
+                color: _getStatusColor(widget.order.orderStage),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDriverInfo(Map<String, dynamic> driverData) {
+    if (widget.order.driverUID == "" || widget.order.driverUID.isEmpty) {
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 100),
+        child: const ListTile(
+          leading: CircleAvatar(
+            backgroundColor: Colors.grey,
+            child: Icon(Icons.person, color: Colors.white),
+          ),
+          title: Text('Driver not assigned yet'),
+          subtitle: Text('We are finding the nearest driver for you'),
+        ),
+      );
+    }
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: 100),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: CircleAvatar(
+          backgroundColor: Colors.blue[100],
+          child: const Icon(Icons.person, color: Colors.blue),
+        ),
+        title: Text(
+          driverData['fullNames'],
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(driverData['phoneNumber']),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.phone, color: Colors.green),
+              onPressed: () => _callDriver(driverData['phoneNumber']),
+            ),
+            IconButton(
+              icon: const Icon(Icons.message, color: Colors.blue),
+              onPressed: () => _sendSMS(driverData['phoneNumber']),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.help_outline),
+            label: const Text('Help'),
+            onPressed: () => _showHelpDialog(),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.blue,
+              side: const BorderSide(color: Colors.blue),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.directions),
+            label: const Text('Directions'),
+            onPressed: () => _openDirections(),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getStatusColor(OrderStage stage) {
+    switch (stage) {
+      case OrderStage.Processing:
+        return Colors.blue;
+      case OrderStage.OnDelivery:
+        return Colors.orange;
+      case OrderStage.InTransit:
+        return Colors.amber;
+      case OrderStage.Delivered:
+        return Colors.green;
+    }
+  }
+
+  String _getStatusText(OrderStage stage) {
+    switch (stage) {
+      case OrderStage.Processing:
+        return 'Preparing your order';
+      case OrderStage.OnDelivery:
+        return 'On the way';
+      case OrderStage.InTransit:
+        return 'In transit';
+      case OrderStage.Delivered:
+        return 'Delivered';
+    }
+  }
+
+  Future<void> _callDriver(String phoneNumber) async {
+    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        throw 'Could not launch phone app';
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not launch dialer: $e')));
+    }
+  }
+
+  Future<void> _sendSMS(String phoneNumber) async {
+    final Uri smsUri = Uri(
+      scheme: 'sms',
+      path: phoneNumber,
+      queryParameters: {'body': 'Hello driver, about my order...'},
+    );
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        throw 'Could not launch SMS app';
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not launch SMS: $e')));
+    }
+  }
+
+  Future<void> _openDirections() async {
+    if (_driverLocation == null) return;
+
+    final Uri directionsUri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '&destination=${_driverLocation!.latitude},${_driverLocation!.longitude}'
+      '&travelmode=driving',
+    );
+
+    try {
+      if (await canLaunchUrl(directionsUri)) {
+        await launchUrl(directionsUri);
+      } else {
+        throw 'Could not launch maps app';
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not launch maps: $e')));
+    }
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Need Help?'),
+        content: const Text(
+          'If you need assistance with your delivery, please contact our support team.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _callSupport();
+            },
+            child: const Text('Call Support'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _callSupport() async {
+    const supportNumber = '+254700000000'; // Replace with your support number
+    final Uri phoneUri = Uri(scheme: 'tel', path: supportNumber);
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        throw 'Could not launch phone app';
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not launch dialer: $e')));
+    }
+  }
+}

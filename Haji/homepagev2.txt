@@ -1,0 +1,812 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hajiv1/auth_v1/login_v1.dart';
+import 'package:hajiv1/components/nofication_button_v1.dart';
+import 'package:hajiv1/components/notification_screen_v1.dart';
+import 'package:hajiv1/orders/new_order_v2.dart';
+import 'package:hajiv1/orders/orders_page_v2.dart';
+import 'package:hajiv1/profile_v1.dart';
+import 'package:hajiv1/services/auth_service.dart';
+import 'package:hajiv1/wallet_v1.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String selectedLocation = "Select Location";
+  final AuthService _authService = AuthService();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        title: Row(
+          children: [
+            Icon(Icons.location_on, color: Colors.blue, size: 20),
+            SizedBox(width: 8),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => _showLocationPicker(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Deliver to',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                    Text(
+                      selectedLocation,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            NoficationIconButtonV1(
+              userId: _authService.currentUser!.uid,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => NotificationScreen(
+                      userId: _authService.currentUser!.uid,
+                    ),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.person_outline, color: Colors.grey[700]),
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (context) => ProfilePage()));
+              },
+            ),
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Search Bar
+            Container(
+              margin: EdgeInsets.all(16),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search for water, gas cylinders...',
+                  prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ),
+
+            // Main Action Banner
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 16),
+              height: 180,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [Colors.blue[600]!, Colors.blue[400]!],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: 20,
+                    top: 20,
+                    child: Icon(
+                      Icons.local_shipping,
+                      size: 80,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Fast Delivery',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Water & Gas delivered in minutes',
+                          style: TextStyle(color: Colors.white70, fontSize: 16),
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const NewOrderPage(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.blue[600],
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: Text('Order Now'),
+                            ),
+                            SizedBox(width: 12),
+                            OutlinedButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => OrdersPage(),
+                                  ),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: BorderSide(color: Colors.white),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: Text('My Orders'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 24),
+
+            // Main Services Section
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Our Services',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Primary Services
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildMainServiceCard(
+                      'Water Delivery',
+                      Icons.water_drop,
+                      Colors.blue,
+                      '20L bottles & more',
+                      () => _navigateToNewOrder('water'),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _buildMainServiceCard(
+                      'Gas Cylinders',
+                      Icons.propane_tank,
+                      Colors.orange,
+                      '13kg, 6kg & 3kg',
+                      () => _navigateToNewOrder('gas'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 24),
+
+            // Quick Actions Section
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Quick Actions',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Quick Actions Grid
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          'Scan & Order',
+                          CupertinoIcons.qrcode,
+                          Colors.purple,
+                          'Scan QR to order',
+                          () => _navigateToScanOrder(),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          'Emergency',
+                          Icons.emergency,
+                          Colors.red,
+                          '24/7 service',
+                          () => _navigateToEmergencyService(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          'Schedule Delivery',
+                          Icons.schedule,
+                          Colors.teal,
+                          'Plan ahead',
+                          () => _navigateToScheduleDelivery(),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          'Bulk Orders',
+                          Icons.inventory_2,
+                          Colors.green,
+                          'For businesses',
+                          () => _navigateToBulkOrders(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 24),
+
+            // Account & Support Section
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Account & Support',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAccountCard(
+                          'My Wallet',
+                          Icons.wallet_outlined,
+                          Colors.indigo,
+                          'Payments & Balance',
+                          () => _navigateToWallet(),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _buildAccountCard(
+                          'My Profile',
+                          Icons.person_outline,
+                          Colors.blue,
+                          'Account settings',
+                          () => _navigateToProfile(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAccountCard(
+                          'Contact Us',
+                          Icons.phone_outlined,
+                          Colors.green,
+                          'Get in touch',
+                          () => _navigateToContactUs(),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _buildAccountCard(
+                          'Support',
+                          Icons.support_agent,
+                          Colors.orange,
+                          'Help & FAQ',
+                          () => _navigateToSupport(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 24),
+
+            // Recent Orders Section
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Recent Orders',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => OrdersPage()),
+                      );
+                    },
+                    child: Text('View All'),
+                  ),
+                ],
+              ),
+            ),
+
+            // Recent Orders List
+            SizedBox(
+              height: 120,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  return _buildRecentOrderCard(index);
+                },
+              ),
+            ),
+
+            SizedBox(height: 32),
+
+            // Logout Section
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showLogoutDialog(context),
+                  icon: Icon(Icons.logout, color: Colors.red),
+                  label: Text('Logout', style: TextStyle(color: Colors.red)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.red.withOpacity(0.3)),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainServiceCard(
+    String title,
+    IconData icon,
+    Color color,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 15,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 28),
+            ),
+            SizedBox(height: 16),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard(
+    String title,
+    IconData icon,
+    Color color,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 24),
+            SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccountCard(
+    String title,
+    IconData icon,
+    Color color,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 24),
+            SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentOrderCard(int index) {
+    List<Map<String, dynamic>> orders = [
+      {
+        'title': '20L Water Bottle',
+        'status': 'Delivered',
+        'date': 'Today',
+        'color': Colors.blue,
+      },
+      {
+        'title': '13kg Gas Cylinder',
+        'status': 'In Transit',
+        'date': 'Yesterday',
+        'color': Colors.orange,
+      },
+      {
+        'title': '6kg Gas Cylinder',
+        'status': 'Delivered',
+        'date': '2 days ago',
+        'color': Colors.orange,
+      },
+    ];
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => OrdersPage()));
+      },
+      child: Container(
+        width: 200,
+        margin: EdgeInsets.only(right: 12),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: orders[index]['color'],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    orders[index]['title'],
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              orders[index]['status'],
+              style: TextStyle(
+                color: orders[index]['status'] == 'Delivered'
+                    ? Colors.green
+                    : Colors.orange,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              orders[index]['date'],
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Navigation methods
+  void _navigateToNewOrder([String? type]) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const NewOrderPage()));
+  }
+
+  void _navigateToScanOrder() {
+    // Navigate to Scan & Order page
+    // Navigator.of(context).push(
+    //   MaterialPageRoute(builder: (context) => ScanOrderPage()),
+    // );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Scan & Order feature coming soon!')),
+    );
+  }
+
+  void _navigateToEmergencyService() {
+    // Navigate to Emergency Service page
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Emergency Service feature coming soon!')),
+    );
+  }
+
+  void _navigateToScheduleDelivery() {
+    // Navigate to Schedule Delivery page
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Schedule Delivery feature coming soon!')),
+    );
+  }
+
+  void _navigateToBulkOrders() {
+    // Navigate to Bulk Orders page
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Bulk Orders feature coming soon!')));
+  }
+
+  void _navigateToWallet() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => WalletPage()));
+  }
+
+  void _navigateToProfile() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => ProfilePage()));
+  }
+
+  void _navigateToContactUs() {
+    // Navigate to Contact Us page
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Contact Us feature coming soon!')));
+  }
+
+  void _navigateToSupport() {
+    // Navigate to Support page
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Support feature coming soon!')));
+  }
+
+  void _showLocationPicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select Location',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              ListTile(
+                leading: Icon(Icons.my_location),
+                title: Text('Use Current Location'),
+                onTap: () {
+                  setState(() {
+                    selectedLocation = 'Current Location';
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.location_city),
+                title: Text('Nairobi CBD'),
+                onTap: () {
+                  setState(() {
+                    selectedLocation = 'Nairobi CBD';
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.location_city),
+                title: Text('Westlands'),
+                onTap: () {
+                  setState(() {
+                    selectedLocation = 'Westlands';
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => SignInScreen()),
+                );
+                await _authService.signOut();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

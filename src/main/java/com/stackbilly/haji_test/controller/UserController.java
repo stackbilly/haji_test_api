@@ -45,6 +45,11 @@ public class UserController {
         return userService.createUser(nUser);
     }
 
+    @PostMapping("/users/login")
+    public User authenticateUser(@RequestBody String username, @RequestBody String password) {
+
+    }
+
     @PutMapping("/users/{id}")
     public User updateUser(@RequestBody User user, @PathVariable UUID id) {
         return userService.updateUser(user);
